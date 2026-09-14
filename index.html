@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Image Layout</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  /* The background stage */
+  .stage {
+    --ar: 1.7778; /* updated automatically from T7.png */
+    position: relative;
+    width: min(100vw, calc(100vh * var(--ar)));
+    aspect-ratio: var(--ar);
+    background: #222 center / 100% 100% no-repeat;
+    overflow: hidden;
+  }
+
+  /* This layer holds all 6 images and moves/scales as a group */
+  .layer {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+
+  /* Each individual image */
+  .item {
+    position: absolute;
+    left: calc(var(--x) * 1%);
+    top:  calc(var(--y) * 1%);
+    width: calc(var(--w) * 1%);
+    height: auto;
+    transform: translate(-50%, -50%)
+               rotate(calc(var(--r) * 1deg))
+               scale(var(--s));
+    transform-origin: 50% 50%;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="layer" id="layer"></div>
+  </div>
+
+<script>
+/* ============================================================
+   EDIT EVERYTHING HERE
+   ------------------------------------------------------------
+   global.x     -> moves ALL images left/right  (% of width,  + = right)
+   global.y     -> moves ALL images up/down     (% of height, + = down)
+   global.scale -> scales ALL images            (1 = 100%)
+
+   images[].x   -> centre of that image, % of width  (0 = left, 100 = right)
+   images[].y   -> centre of that image, % of height (0 = top, 100 = bottom)
+   images[].w   -> width of that image, % of stage width
+   images[].scale / rotation -> per-image tweaks
+   ============================================================ */
+const CONFIG = {
+  background: 'T7.png',
+
+  global: {
+    x: 0,
+    y: 0,
+    scale: 1
+  },
+
+  images: [
+    { file: 'T1.png', x: 25, y: 30, w: 15, scale: 1, rotation: 0 },
+    { file: 'T2.png', x: 50, y: 30, w: 15, scale: 1, rotation: 0 },
+    { file: 'T3.png', x: 75, y: 30, w: 15, scale: 1, rotation: 0 },
+    { file: 'T4.png', x: 25, y: 70, w: 15, scale: 1, rotation: 0 },
+    { file: 'T5.png', x: 50, y: 70, w: 15, scale: 1, rotation: 0 },
+    { file: 'T6.png', x: 75, y: 70, w: 15, scale: 1, rotation: 0 }
+  ]
+};
+/* ========================= END OF CONFIG ==================== */
+
+
+const stage = document.querySelector('.stage');
+const layer = document.getElementById('layer');
+
+/* Background + aspect ratio from T7.png */
+stage.style.backgroundImage = `url("${CONFIG.background}")`;
+
+const bgProbe = new Image();
+bgProbe.onload = () => {
+  const ar = bgProbe.naturalWidth / bgProbe.naturalHeight;
+  stage.style.setProperty('--ar', ar);
+};
+bgProbe.src = CONFIG.background;
+
+/* Build the 6 images */
+CONFIG.images.forEach(cfg => {
+  const img = document.createElement('img');
+  img.className = 'item';
+  img.src = cfg.file;
+  img.alt = '';
+  img.draggable = false;
+
+  img.style.setProperty('--x', cfg.x);
+  img.style.setProperty('--y', cfg.y);
+  img.style.setProperty('--w', cfg.w);
+  img.style.setProperty('--s', cfg.scale ?? 1);
+  img.style.setProperty('--r', cfg.rotation ?? 0);
+
+  layer.appendChild(img);
+});
+
+/* Apply the global group transform */
+function applyGlobal() {
+  const g = CONFIG.global;
+  layer.style.transform = `translate(${g.x}%, ${g.y}%) scale(${g.scale})`;
+}
+applyGlobal();
+</script>
+</body>
+</html>
